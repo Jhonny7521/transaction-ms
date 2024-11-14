@@ -1,0 +1,107 @@
+openapi: 3.0.3
+info:
+  title: Transaction Service API
+  description: API para la gestión de transacciones bancarias
+  version: 1.0.0
+servers:
+  - url: http://localhost:9095/api/v1
+    description: Local development server
+paths:
+  /transactions:
+    post:
+      tags:
+        - Transaction
+      summary: Create a new transaction
+      operationId: createTransaction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionRequest'
+      responses:
+        '201':
+          description: Transaction created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponse'
+    get:
+      tags:
+        - Transaction
+      summary: Get transactions
+      operationId: getTransactions
+      parameters:
+        - name: accountId
+          in: query
+          schema:
+            type: string
+        - name: creditId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of transactions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransactionResponse'
+components:
+  schemas:
+    TransactionRequest:
+      type: object
+      required:
+        - transactionType
+        - amount
+      properties:
+        transactionType:
+          type: string
+          enum: [DEPOSIT, WITHDRAWAL, PAYMENT, CREDIT_CHARGE]
+        amount:
+          type: number
+        sourceAccountId:
+          type: string
+        targetAccountId:
+          type: string
+        creditId:
+          type: string
+        description:
+          type: string
+    TransactionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        transactionType:
+          type: string
+        amount:
+          type: number
+        sourceAccountId:
+          type: string
+        targetAccountId:
+          type: string
+        creditId:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [COMPLETED, PENDING, FAILED]
+        transactionDate:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
