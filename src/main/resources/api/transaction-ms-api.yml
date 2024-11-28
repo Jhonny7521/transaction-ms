@@ -7,29 +7,111 @@ servers:
   - url: http://localhost:9095/api/v1
     description: Local development server
 paths:
-  /transactions:
+  /transactions/deposit:
     post:
       tags:
         - Transaction
-      summary: Create a new transaction
-      operationId: createTransaction
+      summary: Create a deposit transaction
+      operationId: createDeposit
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransactionRequest'
+              $ref: '#/components/schemas/DepositRequestDTO'
       responses:
         '201':
-          description: Transaction created successfully
+          description: Deposit created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponse'
+                $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions/withdrawal:
+    post:
+      tags:
+        - Transaction
+      summary: Create a withdrawal transaction
+      operationId: createWithdrawal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawalRequestDTO'
+      responses:
+        '201':
+          description: Withdrawal created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions/transfer:
+    post:
+      tags:
+        - Transaction
+      summary: Create a transfer transaction
+      operationId: createTransfer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferRequestDTO'
+      responses:
+        '201':
+          description: Transfer created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions/payment:
+    post:
+      tags:
+        - Transaction
+      summary: Create a credit payment transaction
+      operationId: createPayment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentRequestDTO'
+      responses:
+        '201':
+          description: Payment created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions/credit-charge:
+    post:
+      tags:
+        - Transaction
+      summary: Create a credit card charge transaction
+      operationId: createCreditCharge
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditChargeRequestDTO'
+      responses:
+        '201':
+          description: Credit charge created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions:
     get:
       tags:
         - Transaction
-      summary: Get transactions
+      summary: Get all transactions
       operationId: getTransactions
       parameters:
         - name: accountId
@@ -58,36 +140,131 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TransactionResponse'
+                  $ref: '#/components/schemas/TransactionResponseDTO'
+
+  /transactions/products/{productId}/movements:
+    get:
+      tags:
+        - Transaction
+      summary: Get all movements for a specific product
+      operationId: getProductMovements
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: productType
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: List of movements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductMovementsResponseDTO'
+
 components:
   schemas:
-    TransactionRequest:
+    DepositRequestDTO:
       type: object
       required:
-        - transactionType
+        - targetAccountId
         - amount
       properties:
-        transactionType:
+        targetAccountId:
           type: string
-          enum: [DEPOSIT, WITHDRAWAL, PAYMENT, CREDIT_CHARGE]
         amount:
           type: number
+        description:
+          type: string
+
+    WithdrawalRequestDTO:
+      type: object
+      required:
+        - sourceAccountId
+        - amount
+      properties:
+        sourceAccountId:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+
+    TransferRequestDTO:
+      type: object
+      required:
+        - sourceAccountId
+        - targetAccountId
+        - amount
+      properties:
         sourceAccountId:
           type: string
         targetAccountId:
           type: string
-        creditId:
-          type: string
+        amount:
+          type: number
         description:
           type: string
-    TransactionResponse:
+
+    PaymentRequestDTO:
+      type: object
+      required:
+        - sourceAccountId
+        - creditId
+        - amount
+      properties:
+        sourceAccountId:
+          type: string
+        creditId:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+
+    CreditChargeRequestDTO:
+      type: object
+      required:
+        - creditId
+        - amount
+      properties:
+        creditId:
+          type: string
+        amount:
+          type: number
+        description:
+          type: string
+
+    TransactionResponseDTO:
       type: object
       properties:
         id:
           type: string
         transactionType:
           type: string
+          enum: [DEPOSIT, WITHDRAWAL, PAYMENT, CREDIT_CHARGE, TRANSFER]
+        productType:
+          type: string
+          enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
         amount:
+          type: number
+        commission:
           type: number
         sourceAccountId:
           type: string
@@ -105,3 +282,40 @@ components:
           format: date-time
         errorMessage:
           type: string
+
+    ProductMovementsResponseDTO:
+      type: object
+      properties:
+        productId:
+          type: string
+        productType:
+          type: string
+          enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+        movements:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionResponseDTO'
+        summary:
+          $ref: '#/components/schemas/MovementsSummaryDTO'
+
+    MovementsSummaryDTO:
+      type: object
+      properties:
+        totalDeposits:
+          type: number
+        totalWithdrawals:
+          type: number
+        totalCommissions:
+          type: number
+        totalMovements:
+          type: integer
+        initialBalance:
+          type: number
+        finalBalance:
+          type: number
