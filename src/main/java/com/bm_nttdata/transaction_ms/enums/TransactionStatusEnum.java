@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum TransactionStatusEnum {
 
     COMPLETED("COMPLETED"),
-    PENDING("PENDING"),
     FAILED("FAILED");
 
     private final String value;

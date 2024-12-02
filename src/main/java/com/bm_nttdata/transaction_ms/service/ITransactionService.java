@@ -2,22 +2,22 @@ package com.bm_nttdata.transaction_ms.service;
 
 import com.bm_nttdata.transaction_ms.entity.Transaction;
 import com.bm_nttdata.transaction_ms.enums.ProductTypeEnum;
+import com.bm_nttdata.transaction_ms.model.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public interface ITransactionService {
 
     Transaction processDeposit(DepositRequestDTO request);
 
-    Transaction processWithdrawal(WithdrawalRequest request);
+    Transaction processWithdrawal(WithdrawalRequestDTO request);
 
-    Transaction processTransfer(TransferRequest request);
+    Transaction processPayment(PaymentRequestDTO request);
 
-    Transaction processPayment(PaymentRequest request);
+    Transaction processCreditCharge(CreditChargeRequestDTO request);
 
-    Transaction processCreditCharge(CreditChargeRequest request);
-
-    ProductMovementsResponse getProductMovements(String productId, ProductTypeEnum productType,
-                                                 LocalDateTime startDate, LocalDateTime endDate);
+    ProductMovementsResponseDTO getProductMovements(String productId, String productType,
+                                                    LocalDate startDate, LocalDate endDate);
 
 }
