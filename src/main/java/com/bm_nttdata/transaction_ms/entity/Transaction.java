@@ -3,6 +3,8 @@ package com.bm_nttdata.transaction_ms.entity;
 import com.bm_nttdata.transaction_ms.enums.ProductTypeEnum;
 import com.bm_nttdata.transaction_ms.enums.TransactionStatusEnum;
 import com.bm_nttdata.transaction_ms.enums.TransactionTypeEnum;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,9 +12,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
+/**
+ * Representa una entidad de transacciones en el sistema bancario.
+ * Esta clase maneja el almacenamiento y gestión de la información de transacciones.
+ */
 @Data
 @Builder
 @NoArgsConstructor

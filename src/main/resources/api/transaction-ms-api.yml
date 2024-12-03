@@ -18,14 +18,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepositRequestDTO'
+              $ref: '#/components/schemas/DepositRequestDto'
       responses:
         '201':
           description: Deposit created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/withdrawal:
     post:
@@ -38,14 +38,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WithdrawalRequestDTO'
+              $ref: '#/components/schemas/WithdrawalRequestDto'
       responses:
         '201':
           description: Withdrawal created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/transfer:
     post:
@@ -58,14 +58,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransferRequestDTO'
+              $ref: '#/components/schemas/TransferRequestDto'
       responses:
         '201':
           description: Transfer created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/payment:
     post:
@@ -78,14 +78,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentRequestDTO'
+              $ref: '#/components/schemas/PaymentRequestDto'
       responses:
         '201':
           description: Payment created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/credit-charge:
     post:
@@ -98,14 +98,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditChargeRequestDTO'
+              $ref: '#/components/schemas/CreditChargeRequestDto'
       responses:
         '201':
           description: Credit charge created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions:
     get:
@@ -140,7 +140,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TransactionResponseDTO'
+                  $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/products/{productId}/movements:
     get:
@@ -178,11 +178,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductMovementsResponseDTO'
+                $ref: '#/components/schemas/ProductMovementsResponseDto'
 
 components:
   schemas:
-    DepositRequestDTO:
+    DepositRequestDto:
       type: object
       required:
         - targetAccountId
@@ -201,7 +201,7 @@ components:
           type: string
           description: Descripcion de deposito
 
-    WithdrawalRequestDTO:
+    WithdrawalRequestDto:
       type: object
       required:
         - sourceAccountId
@@ -220,7 +220,7 @@ components:
           type: string
           description: Descripcion de retiro
 
-    TransferRequestDTO:
+    TransferRequestDto:
       type: object
       required:
         - sourceAccountId
@@ -240,7 +240,7 @@ components:
           type: string
           description: Descripcion de transferencia
 
-    PaymentRequestDTO:
+    PaymentRequestDto:
       type: object
       required:
         - sourceAccountId
@@ -268,7 +268,7 @@ components:
           type: string
           description: Descripcion de pago
 
-    CreditChargeRequestDTO:
+    CreditChargeRequestDto:
       type: object
       required:
         - creditId
@@ -288,7 +288,7 @@ components:
           type: string
           description: Descripcion de cargo
 
-    TransactionResponseDTO:
+    TransactionResponseDto:
       type: object
       properties:
         id:
@@ -332,7 +332,7 @@ components:
           type: string
           description: Mensaje de error
 
-    ProductMovementsResponseDTO:
+    ProductMovementsResponseDto:
       type: object
       properties:
         productId:
@@ -352,13 +352,13 @@ components:
         movements:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionResponseDTO'
+            $ref: '#/components/schemas/TransactionResponseDto'
           description: lista de transacciones
         summary:
-          $ref: '#/components/schemas/MovementsSummaryDTO'
+          $ref: '#/components/schemas/MovementsSummaryDto'
 
 
-    MovementsSummaryDTO:
+    MovementsSummaryDto:
       type: object
       properties:
         totalDeposits:
