@@ -5,6 +5,7 @@ import com.bm_nttdata.transaction_ms.model.CreditChargeRequestDto;
 import com.bm_nttdata.transaction_ms.model.DepositRequestDto;
 import com.bm_nttdata.transaction_ms.model.PaymentRequestDto;
 import com.bm_nttdata.transaction_ms.model.ProductMovementsResponseDto;
+import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import java.time.LocalDate;
 
@@ -68,4 +69,14 @@ public interface TransactionService {
     ProductMovementsResponseDto getProductMovements(String productId, String productType,
                                                     LocalDate startDate, LocalDate endDate);
 
+    /**
+     * Procesa una transferencia bancaria.
+     * Valida la solicitud, verifica si la cuenta origen contiene saldo
+     * disponible y registra la transacción.
+     *
+     * @param transferRequest DTO que contiene la información necesaria para realizar
+     *               la transferencia, incluyendo cuenta destino y monto
+     * @return Transaction objeto que representa la transacción completada
+     */
+    Transaction processTransfer(TransferRequestDto transferRequest);
 }

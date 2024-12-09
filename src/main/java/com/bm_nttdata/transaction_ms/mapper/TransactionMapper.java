@@ -5,6 +5,7 @@ import com.bm_nttdata.transaction_ms.model.CreditChargeRequestDto;
 import com.bm_nttdata.transaction_ms.model.DepositRequestDto;
 import com.bm_nttdata.transaction_ms.model.PaymentRequestDto;
 import com.bm_nttdata.transaction_ms.model.TransactionResponseDto;
+import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
@@ -50,6 +51,14 @@ public interface TransactionMapper {
      * @return Entidad Transacción con los datos mapeados
      */
     Transaction chargeRequestToTransaction(CreditChargeRequestDto chargeRequest);
+
+    /**
+     * Convierte un objeto DTO de solicitud de transferencia a una entidad de transacción.
+     *
+     * @param transferRequest DTO con la información de solicitud de la transferencia
+     * @return Entidad Transacción con los datos mapeados
+     */
+    Transaction transferRequestToTransaction(TransferRequestDto transferRequest);
 
     /**
      * Convierte una entidad de transacción a un DTO de respuesta de transacción.

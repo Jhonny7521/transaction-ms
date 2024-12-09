@@ -11,6 +11,7 @@ import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import com.bm_nttdata.transaction_ms.service.TransactionService;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -63,7 +64,9 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     @Override
     public ResponseEntity<TransactionResponseDto> createTransfer(
             TransferRequestDto transferRequest) {
-        return TransactionApiDelegate.super.createTransfer(transferRequest);
+        log.info("Processing transfer request: {}", transferRequest);
+        Transaction transaction = transactionService.processTransfer(transferRequest);
+        return ResponseEntity.ok(transactionMapper.transactionToResponseDto(transaction));
     }
 
     @Override

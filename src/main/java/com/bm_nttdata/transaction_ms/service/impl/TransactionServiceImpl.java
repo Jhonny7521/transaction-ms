@@ -14,6 +14,7 @@ import com.bm_nttdata.transaction_ms.model.CreditChargeRequestDto;
 import com.bm_nttdata.transaction_ms.model.DepositRequestDto;
 import com.bm_nttdata.transaction_ms.model.PaymentRequestDto;
 import com.bm_nttdata.transaction_ms.model.ProductMovementsResponseDto;
+import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import com.bm_nttdata.transaction_ms.repository.TransactionRepository;
 import com.bm_nttdata.transaction_ms.service.TransactionService;
@@ -305,6 +306,63 @@ public class TransactionServiceImpl implements TransactionService {
         } catch (Exception e) {
             log.error("Unexpected error when getting movements: ",  e.getMessage());
             throw new ServiceException("Unexpected error when getting movements");
+        }
+    }
+
+    /**
+     * Procesa una transferencia bancaria.
+     * Valida la solicitud, verifica si la cuenta origen contiene saldo
+     * disponible y registra la transacción.
+     *
+     * @param transferRequest DTO que contiene la información necesaria para realizar
+     *               la transferencia, incluyendo cuenta destino y monto
+     * @return Transaction objeto que representa la transacción completada
+     */
+    @Override
+    public Transaction processTransfer(TransferRequestDto transferRequest) {
+        log.info("Starting transfer from account {} to account {}",
+                transferRequest.getSourceAccountId(),
+                transferRequest.getTargetAccountId());
+        ApiResponseDto response = null;
+
+        try {
+            Transaction transaction =
+                    transactionMapper.transferRequestToTransaction(transferRequest);
+            response = accountClient.transferToAccount(transferRequest);
+            log.info("Results of transfer: " + response);
+
+            setTransferResults(
+                    response, transaction,
+                    TransactionTypeEnum.TRANSFER,
+                    ProductTypeEnum.BANK_ACCOUNT);
+
+            transaction = transactionRepository.save(transaction);
+            log.info(" *** End of transfer process *** ");
+
+            return transaction;
+
+        } catch (Exception e) {
+            String depositStatus = (response != null) ? response.getStatus() : "UNKNOWN";
+            log.info("Transfer status: {}.", depositStatus);
+            log.error("Unexpected error while saving transaction: ",  e.getMessage());
+            throw new ServiceException("Unexpected error while saving transaction");
+        }
+
+    }
+
+    private void setTransferResults(
+            ApiResponseDto response, Transaction transaction,
+            TransactionTypeEnum transactionType, ProductTypeEnum productType) {
+        transaction.setTransactionType(transactionType);
+        transaction.setProductType(productType);
+        transaction.setStatus(TransactionStatusEnum.COMPLETED);
+        transaction.setTransactionDate(LocalDateTime.now());
+        transaction.setCreatedAt(LocalDateTime.now());
+        transaction.setUpdatedAt(LocalDateTime.now());
+
+        if (!response.getStatus().equals("SUCCESS")) {
+            transaction.setStatus(TransactionStatusEnum.FAILED);
+            transaction.setErrorMessage(response.getError());
         }
     }
 

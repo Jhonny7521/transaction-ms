@@ -4,6 +4,7 @@ import com.bm_nttdata.transaction_ms.dto.ApiResponseDto;
 import com.bm_nttdata.transaction_ms.dto.TransactionFeeRequestDto;
 import com.bm_nttdata.transaction_ms.dto.TransactionFeeResponseDto;
 import com.bm_nttdata.transaction_ms.model.DepositRequestDto;
+import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,4 +50,14 @@ public interface AccountClient {
     @PostMapping("/accounts/withdraw")
     ApiResponseDto withdrawalToAccount(WithdrawalRequestDto withdrawalRequest);
 
+    /**
+     * Realiza una transferencia bancaria entre dos cuentas del mismo banco.
+     *
+     * @param transferRequest DTO que contiene la información necesaria para la
+     *                        transferencia bancaria
+     * @return ApiResponseDto objeto de respuesta que indica el resultado de la
+     *         operación de transferencia
+     */
+    @PostMapping("/accounts/transfer")
+    ApiResponseDto transferToAccount(TransferRequestDto transferRequest);
 }
