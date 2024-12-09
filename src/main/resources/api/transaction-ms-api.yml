@@ -18,14 +18,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DepositRequestDTO'
+              $ref: '#/components/schemas/DepositRequestDto'
       responses:
         '201':
           description: Deposit created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/withdrawal:
     post:
@@ -38,14 +38,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WithdrawalRequestDTO'
+              $ref: '#/components/schemas/WithdrawalRequestDto'
       responses:
         '201':
           description: Withdrawal created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/transfer:
     post:
@@ -58,14 +58,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TransferRequestDTO'
+              $ref: '#/components/schemas/TransferRequestDto'
       responses:
         '201':
           description: Transfer created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/payment:
     post:
@@ -78,14 +78,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PaymentRequestDTO'
+              $ref: '#/components/schemas/PaymentRequestDto'
       responses:
         '201':
           description: Payment created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/credit-charge:
     post:
@@ -98,14 +98,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreditChargeRequestDTO'
+              $ref: '#/components/schemas/CreditChargeRequestDto'
       responses:
         '201':
           description: Credit charge created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionResponseDTO'
+                $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions:
     get:
@@ -140,7 +140,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TransactionResponseDTO'
+                  $ref: '#/components/schemas/TransactionResponseDto'
 
   /transactions/products/{productId}/movements:
     get:
@@ -159,14 +159,16 @@ paths:
           required: true
           schema:
             type: string
-            enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
+            enum: [ BANK_ACCOUNT, CREDIT, CREDIT_CARD ]
         - name: startDate
           in: query
+          required: true
           schema:
             type: string
             format: date
         - name: endDate
           in: query
+          required: true
           schema:
             type: string
             format: date
@@ -176,11 +178,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProductMovementsResponseDTO'
+                $ref: '#/components/schemas/ProductMovementsResponseDto'
 
 components:
   schemas:
-    DepositRequestDTO:
+    DepositRequestDto:
       type: object
       required:
         - targetAccountId
@@ -188,12 +190,18 @@ components:
       properties:
         targetAccountId:
           type: string
+          description: Identificador de cuenta destino de deposito
         amount:
           type: number
+          description: Monto de deposito
+        feeAmount:
+          type: number
+          description: Monto de comision
         description:
           type: string
+          description: Descripcion de deposito
 
-    WithdrawalRequestDTO:
+    WithdrawalRequestDto:
       type: object
       required:
         - sourceAccountId
@@ -201,12 +209,18 @@ components:
       properties:
         sourceAccountId:
           type: string
+          description: Identificador de cuenta origen de retiro
         amount:
           type: number
+          description: Monto de retiro
+        feeAmount:
+          type: number
+          description: Monto de comision
         description:
           type: string
+          description: Descripcion de retiro
 
-    TransferRequestDTO:
+    TransferRequestDto:
       type: object
       required:
         - sourceAccountId
@@ -215,75 +229,110 @@ components:
       properties:
         sourceAccountId:
           type: string
+          description: Identificador de cuenta origen
         targetAccountId:
           type: string
+          description: Identificador de cuenta destino
         amount:
           type: number
+          description: Monto de transferencia
         description:
           type: string
+          description: Descripcion de transferencia
 
-    PaymentRequestDTO:
+    PaymentRequestDto:
       type: object
       required:
         - sourceAccountId
         - creditId
+        - creditType
         - amount
       properties:
         sourceAccountId:
           type: string
+          description: Identificador de cuenta origen
         creditId:
           type: string
+          description: Identificador de producto de credito (Credito o Tarjeta de Credito)
+        creditType:
+          type: string
+          enum: [CREDIT, CREDIT-CARD]
+          description: Tipo de transaccion
         amount:
           type: number
+          description: Monto de pago
+        feeAmount:
+          type: number
+          description: Monto de comision
         description:
           type: string
+          description: Descripcion de pago
 
-    CreditChargeRequestDTO:
+    CreditChargeRequestDto:
       type: object
       required:
         - creditId
         - amount
+        - totalInstallment
       properties:
         creditId:
           type: string
+          description: Identificador de tarjeta de credito
         amount:
           type: number
+          description: Monto de cargo
+        totalInstallment:
+          type: integer
+          description: Numero de cuotas
         description:
           type: string
+          description: Descripcion de cargo
 
-    TransactionResponseDTO:
+    TransactionResponseDto:
       type: object
       properties:
         id:
           type: string
+          description: Identificador de transaccion
         transactionType:
           type: string
           enum: [DEPOSIT, WITHDRAWAL, PAYMENT, CREDIT_CHARGE, TRANSFER]
+          description: Tipo de transaccion
         productType:
           type: string
           enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
+          description: Tipo de producto
         amount:
           type: number
+          description: Monto de transaccion
         commission:
           type: number
+          description: Comision por transaccion
         sourceAccountId:
           type: string
+          description: Identificador de cuenta origen
         targetAccountId:
           type: string
+          description: Identificador de cuenta destino
         creditId:
           type: string
+          description: Identificador de producto de credito
         description:
           type: string
+          description: Descripcion de transaccion
         status:
           type: string
-          enum: [COMPLETED, PENDING, FAILED]
+          enum: [COMPLETED, FAILED]
+          description: Status de transaccion
         transactionDate:
           type: string
           format: date-time
+          description: Fecha de transaccion
         errorMessage:
           type: string
+          description: Mensaje de error
 
-    ProductMovementsResponseDTO:
+    ProductMovementsResponseDto:
       type: object
       properties:
         productId:
@@ -291,31 +340,42 @@ components:
         productType:
           type: string
           enum: [BANK_ACCOUNT, CREDIT, CREDIT_CARD]
+          description: Tipo de producto
         startDate:
           type: string
           format: date
+          description: Fecha inicial de consulta
         endDate:
           type: string
           format: date
+          description: Fecha final de consulta
         movements:
           type: array
           items:
-            $ref: '#/components/schemas/TransactionResponseDTO'
+            $ref: '#/components/schemas/TransactionResponseDto'
+          description: lista de transacciones
         summary:
-          $ref: '#/components/schemas/MovementsSummaryDTO'
+          $ref: '#/components/schemas/MovementsSummaryDto'
 
-    MovementsSummaryDTO:
+
+    MovementsSummaryDto:
       type: object
       properties:
         totalDeposits:
           type: number
+          description: total de depositos
         totalWithdrawals:
           type: number
+          description: total de retiros
         totalCommissions:
           type: number
+          description: Total de comisiones
         totalMovements:
           type: integer
+          description: Total de movimientos
         initialBalance:
           type: number
+          description: Saldo inicial
         finalBalance:
           type: number
+          description: Saldo final
