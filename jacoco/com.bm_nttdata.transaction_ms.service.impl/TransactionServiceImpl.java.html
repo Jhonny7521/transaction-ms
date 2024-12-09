@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TransactionServiceImpl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">transaction-ms</a> &gt; <a href="index.source.html" class="el_package">com.bm_nttdata.transaction_ms.service.impl</a> &gt; <span class="el_source">TransactionServiceImpl.java</span></div><h1>TransactionServiceImpl.java</h1><pre class="source lang-java linenums">package com.bm_nttdata.transaction_ms.service.impl;
+
+import com.bm_nttdata.transaction_ms.client.AccountClient;
+import com.bm_nttdata.transaction_ms.client.CreditClient;
+import com.bm_nttdata.transaction_ms.dto.ApiResponseDto;
+import com.bm_nttdata.transaction_ms.entity.Transaction;
+import com.bm_nttdata.transaction_ms.enums.ProductTypeEnum;
+import com.bm_nttdata.transaction_ms.enums.TransactionStatusEnum;
+import com.bm_nttdata.transaction_ms.enums.TransactionTypeEnum;
+import com.bm_nttdata.transaction_ms.exception.BusinessRuleException;
+import com.bm_nttdata.transaction_ms.exception.ServiceException;
+import com.bm_nttdata.transaction_ms.mapper.TransactionMapper;
+import com.bm_nttdata.transaction_ms.model.CreditChargeRequestDto;
+import com.bm_nttdata.transaction_ms.model.DepositRequestDto;
+import com.bm_nttdata.transaction_ms.model.PaymentRequestDto;
+import com.bm_nttdata.transaction_ms.model.ProductMovementsResponseDto;
+import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
+import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
+import com.bm_nttdata.transaction_ms.repository.TransactionRepository;
+import com.bm_nttdata.transaction_ms.service.TransactionService;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * Implementación del servicio de transacciones.
+ * Proporciona métodos para procesar diferentes tipos de transacciones como depósitos,
+ * retiros, pagos y cargos a créditos, así como consultas de movimientos.
+ */
+<span class="fc" id="L35">@Slf4j</span>
+@Service
+@Transactional
+<span class="fc" id="L38">@RequiredArgsConstructor</span>
+public class TransactionServiceImpl implements TransactionService {
+
+    private final AccountClient accountClient;
+    private final CreditClient creditClient;
+    private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
+
+    /**
+     * Procesa una operación de depósito en una cuenta.
+     * Valida la solicitud, realiza el depósito y registra la transacción correspondiente.
+     *
+     * @param depositRequest DTO que contiene la información necesaria para realizar el depósito,
+     *               incluyendo cuenta destino y monto
+     * @return Transaction objeto que representa la transacción realizada
+     * @throws ServiceException si ocurre un error durante el proceso de depósito
+     */
+    @Override
+    public Transaction processDeposit(DepositRequestDto depositRequest) {
+
+<span class="fc" id="L58">        log.info(&quot;Starting deposit process to bank account: {}&quot;,</span>
+<span class="fc" id="L59">                depositRequest.getTargetAccountId());</span>
+<span class="fc" id="L60">        ApiResponseDto response = null;</span>
+
+        try {
+<span class="fc" id="L63">            Transaction transaction =</span>
+<span class="fc" id="L64">                    transactionMapper.depositRequestToTransaction(depositRequest);</span>
+<span class="fc" id="L65">            response = accountClient.depositToAccount(depositRequest);</span>
+<span class="fc" id="L66">            log.info(&quot;Results of deposit: &quot; + response);</span>
+
+<span class="fc" id="L68">            transaction.setTransactionType(TransactionTypeEnum.DEPOSIT);</span>
+<span class="fc" id="L69">            transaction.setProductType(ProductTypeEnum.BANK_ACCOUNT);</span>
+<span class="fc" id="L70">            transaction.setStatus(TransactionStatusEnum.COMPLETED);</span>
+<span class="fc" id="L71">            transaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L72">            transaction.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L73">            transaction.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="fc bfc" id="L75" title="All 2 branches covered.">            if (!response.getStatus().equals(&quot;SUCCESS&quot;)) {</span>
+<span class="fc" id="L76">                transaction.setStatus(TransactionStatusEnum.FAILED);</span>
+<span class="fc" id="L77">                transaction.setErrorMessage(response.getError());</span>
+            }
+
+<span class="fc" id="L80">            transaction = transactionRepository.save(transaction);</span>
+<span class="fc" id="L81">            log.info(&quot; *** End of deposit process *** &quot;);</span>
+
+<span class="fc" id="L83">            return transaction;</span>
+
+<span class="nc" id="L85">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">            String depositStatus = (response != null) ? response.getStatus() : &quot;UNKNOWN&quot;;</span>
+<span class="nc" id="L87">            log.info(&quot;Deposit status: {}.&quot;, depositStatus);</span>
+<span class="nc" id="L88">            log.error(&quot;Unexpected error while saving transaction: &quot;,  e.getMessage());</span>
+<span class="nc" id="L89">            throw new ServiceException(&quot;Unexpected error while saving transaction&quot;);</span>
+        }
+    }
+
+    /**
+     * Procesa una operación de retiro de una cuenta.
+     * Valida la solicitud, verifica fondos disponibles y registra la transacción.
+     *
+     * @param withdrawalRequest DTO que contiene la información necesaria para realizar el retiro,
+     *               incluyendo cuenta origen y monto
+     * @return Transaction objeto que representa la transacción realizada
+     * @throws ServiceException si ocurre un error durante el proceso de retiro
+     */
+    @Override
+    public Transaction processWithdrawal(WithdrawalRequestDto withdrawalRequest) {
+
+<span class="fc" id="L105">        log.info(&quot;Starting withdrawal process to bank account: {}&quot;,</span>
+<span class="fc" id="L106">                withdrawalRequest.getSourceAccountId());</span>
+<span class="fc" id="L107">        ApiResponseDto response = null;</span>
+
+        try {
+<span class="fc" id="L110">            Transaction transaction =</span>
+<span class="fc" id="L111">                    transactionMapper.withdrawalRequestToTransaction(withdrawalRequest);</span>
+<span class="fc" id="L112">            response = accountClient.withdrawalToAccount(withdrawalRequest);</span>
+<span class="fc" id="L113">            log.info(&quot;Results of withdrawal: &quot; + response);</span>
+
+<span class="fc" id="L115">            transaction.setTransactionType(TransactionTypeEnum.WITHDRAWAL);</span>
+<span class="fc" id="L116">            transaction.setProductType(ProductTypeEnum.BANK_ACCOUNT);</span>
+<span class="fc" id="L117">            transaction.setStatus(TransactionStatusEnum.COMPLETED);</span>
+<span class="fc" id="L118">            transaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L119">            transaction.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L120">            transaction.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="fc bfc" id="L122" title="All 2 branches covered.">            if (!response.getStatus().equals(&quot;SUCCESS&quot;)) {</span>
+<span class="fc" id="L123">                transaction.setStatus(TransactionStatusEnum.FAILED);</span>
+<span class="fc" id="L124">                transaction.setErrorMessage(response.getError());</span>
+            }
+
+<span class="fc" id="L127">            transaction = transactionRepository.save(transaction);</span>
+<span class="fc" id="L128">            log.info(&quot; *** End of withdrawal process *** &quot;);</span>
+
+<span class="fc" id="L130">            return transaction;</span>
+
+<span class="nc" id="L132">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">            String depositStatus = (response != null) ? response.getStatus() : &quot;UNKNOWN&quot;;</span>
+<span class="nc" id="L134">            log.info(&quot;Withdrawal status: {}.&quot;, depositStatus);</span>
+<span class="nc" id="L135">            log.error(&quot;Unexpected error while saving transaction: &quot;,  e.getMessage());</span>
+<span class="nc" id="L136">            throw new ServiceException(&quot;Unexpected error while saving transaction&quot;);</span>
+        }
+    }
+
+    /**
+     * Procesa un pago hacia un crédito o tarjeta de crédito.
+     * Valida la solicitud, procesa el pago y registra la transacción.
+     *
+     * @param paymentRequest DTO que contiene la información necesaria para realizar el pago,
+     *               incluyendo identificador del crédito y monto
+     * @return Transaction objeto que representa la transacción realizada
+     * @throws BusinessRuleException si el tipo de producto es desconocido
+     * @throws ServiceException si ocurre un error durante el proceso de pago
+     */
+    @Override
+    public Transaction processPayment(PaymentRequestDto paymentRequest) {
+
+<span class="fc" id="L153">        log.info(&quot;Starting credit product payment process: {}&quot;, paymentRequest.getCreditId());</span>
+<span class="fc" id="L154">        ApiResponseDto response = null;</span>
+
+        try {
+<span class="fc" id="L157">            Transaction transaction =</span>
+<span class="fc" id="L158">                    transactionMapper.paymentRequestToTransaction(paymentRequest);</span>
+<span class="fc" id="L159">            String creditType = paymentRequest.getCreditType().getValue();</span>
+
+<span class="pc bpc" id="L161" title="1 of 3 branches missed.">            switch (creditType) {</span>
+                case &quot;CREDIT&quot; -&gt; {
+<span class="fc" id="L163">                    response = creditClient.paymentCredit(paymentRequest);</span>
+<span class="fc" id="L164">                    transaction.setProductType(ProductTypeEnum.CREDIT);</span>
+<span class="fc" id="L165">                }</span>
+                case &quot;CREDIT-CARD&quot; -&gt; {
+<span class="fc" id="L167">                    response = creditClient.paymentCreditCard(paymentRequest);</span>
+<span class="fc" id="L168">                    transaction.setProductType(ProductTypeEnum.CREDIT_CARD);</span>
+<span class="fc" id="L169">                }</span>
+                default -&gt;
+<span class="nc" id="L171">                        throw new BusinessRuleException(&quot;Unknown credit type&quot;);</span>
+            }
+
+<span class="fc" id="L174">            log.info(&quot;Payment results: &quot; + response);</span>
+
+<span class="fc" id="L176">            transaction.setTransactionType(TransactionTypeEnum.PAYMENT);</span>
+<span class="fc" id="L177">            transaction.setStatus(TransactionStatusEnum.COMPLETED);</span>
+<span class="fc" id="L178">            transaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L179">            transaction.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L180">            transaction.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="pc bpc" id="L182" title="1 of 2 branches missed.">            if (!response.getStatus().equals(&quot;SUCCESS&quot;)) {</span>
+<span class="nc" id="L183">                transaction.setStatus(TransactionStatusEnum.FAILED);</span>
+<span class="nc" id="L184">                transaction.setErrorMessage(response.getError());</span>
+            }
+
+<span class="fc" id="L187">            transaction = transactionRepository.save(transaction);</span>
+<span class="fc" id="L188">            log.info(&quot; *** End of payment process *** &quot;);</span>
+
+<span class="fc" id="L190">            return transaction;</span>
+
+<span class="fc" id="L192">        } catch (Exception e) {</span>
+<span class="fc bfc" id="L193" title="All 2 branches covered.">            String paymentStatus = (response != null) ? response.getStatus() : &quot;UNKNOWN&quot;;</span>
+<span class="fc" id="L194">            log.info(&quot;Payment status: {}.&quot;, paymentStatus);</span>
+<span class="fc" id="L195">            log.error(&quot;Unexpected error while saving transaction: &quot;,  e.getMessage());</span>
+<span class="fc" id="L196">            throw new ServiceException(&quot;Unexpected error while saving transaction&quot;);</span>
+        }
+    }
+
+    /**
+     * Procesa un cargo a una tarjeta de crédito.
+     * Valida la solicitud, verifica el límite disponible y registra la transacción.
+     *
+     * @param chargeRequest DTO que contiene la información necesaria para realizar el cargo,
+     *               incluyendo identificador de la tarjeta y monto
+     * @return Transaction objeto que representa la transacción realizada
+     * @throws ServiceException si ocurre un error durante el proceso de cargo
+     */
+    @Override
+    public Transaction processCreditCharge(CreditChargeRequestDto chargeRequest) {
+
+<span class="fc" id="L212">        log.info(&quot;Starting credit card charge process : {}&quot;, chargeRequest.getCreditId());</span>
+<span class="fc" id="L213">        ApiResponseDto response = null;</span>
+
+        try {
+<span class="fc" id="L216">            Transaction transaction =</span>
+<span class="fc" id="L217">                    transactionMapper.chargeRequestToTransaction(chargeRequest);</span>
+
+<span class="fc" id="L219">            response = creditClient.chargeCreditCard(chargeRequest);</span>
+<span class="fc" id="L220">            log.info(&quot;Charge results: &quot; + response);</span>
+
+<span class="fc" id="L222">            transaction.setTransactionType(TransactionTypeEnum.CREDIT_CHARGE);</span>
+<span class="fc" id="L223">            transaction.setProductType(ProductTypeEnum.CREDIT_CARD);</span>
+<span class="fc" id="L224">            transaction.setStatus(TransactionStatusEnum.COMPLETED);</span>
+<span class="fc" id="L225">            transaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L226">            transaction.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L227">            transaction.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="fc bfc" id="L229" title="All 2 branches covered.">            if (!response.getStatus().equals(&quot;SUCCESS&quot;)) {</span>
+<span class="fc" id="L230">                transaction.setStatus(TransactionStatusEnum.FAILED);</span>
+<span class="fc" id="L231">                transaction.setErrorMessage(response.getError());</span>
+            }
+
+<span class="fc" id="L234">            transaction = transactionRepository.save(transaction);</span>
+<span class="fc" id="L235">            log.info(&quot; *** End of charge process *** &quot;);</span>
+
+<span class="fc" id="L237">            return transaction;</span>
+
+<span class="nc" id="L239">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L240" title="All 2 branches missed.">            String paymentStatus = (response != null) ? response.getStatus() : &quot;UNKNOWN&quot;;</span>
+<span class="nc" id="L241">            log.info(&quot;Charge status: {}.&quot;, paymentStatus);</span>
+<span class="nc" id="L242">            log.error(&quot;Unexpected error while saving transaction: &quot;,  e.getMessage());</span>
+<span class="nc" id="L243">            throw new ServiceException(&quot;Unexpected error while saving transaction&quot;);</span>
+        }
+    }
+
+    /**
+     * Obtiene los movimientos de un producto financiero en un período específico.
+     *
+     * @param productId identificador único del producto financiero
+     * @param productType tipo de producto (ACCOUNT, CREDIT, CREDIT_CARD)
+     * @param startDate fecha inicial del período de consulta
+     * @param endDate fecha final del período de consulta
+     * @return ProductMovementsResponseDto objeto que contiene la lista de movimientos
+     *         y el resumen de transacciones del período
+     * @throws BusinessRuleException si el periodo de fechas es incorrecto o tipo de
+     *                              producto es desconocido
+     * @throws ServiceException si ocurre un error durante la búsqueda
+     */
+    @Override
+    public ProductMovementsResponseDto getProductMovements(
+            String productId, String productType, LocalDate startDate, LocalDate endDate) {
+
+<span class="fc" id="L264">        log.info(&quot;Getting movements. Product: {}, ProductType: {}, StartDate: {}, EndDate: {}&quot;,</span>
+                productId, productType, startDate, endDate);
+
+<span class="fc bfc" id="L267" title="All 2 branches covered.">        if (startDate.isAfter(endDate)) {</span>
+<span class="fc" id="L268">            throw new BusinessRuleException(&quot;StartDate can not be greater than EndDate&quot;);</span>
+        }
+
+        try {
+            List&lt;Transaction&gt; transactionList;
+
+<span class="pc bpc" id="L274" title="1 of 3 branches missed.">            switch (productType) {</span>
+                case &quot;BANK_ACCOUNT&quot; -&gt; {
+                    // Deposits
+<span class="fc" id="L277">                    transactionList = transactionRepository.findByProductTypeAndSourceAccountId(</span>
+<span class="fc" id="L278">                            ProductTypeEnum.valueOf(productType), productId);</span>
+                    // Withdrawals
+<span class="fc" id="L280">                    transactionList.addAll(</span>
+<span class="fc" id="L281">                            transactionRepository.findByProductTypeAndTargetAccountId(</span>
+<span class="fc" id="L282">                                    ProductTypeEnum.valueOf(productType), productId));</span>
+<span class="fc" id="L283">                }</span>
+                case &quot;CREDIT&quot;, &quot;CREDIT-CARD&quot; -&gt; {
+<span class="fc" id="L285">                    transactionList =</span>
+<span class="fc" id="L286">                            transactionRepository.findByProductTypeAndCreditId(</span>
+<span class="fc" id="L287">                                    ProductTypeEnum.valueOf(productType), productId);</span>
+<span class="fc" id="L288">                }</span>
+                default -&gt;
+<span class="nc" id="L290">                    throw new BusinessRuleException(&quot;Unknown product type&quot;);</span>
+            }
+
+<span class="fc" id="L293">            transactionList = transactionList.stream()</span>
+<span class="fc" id="L294">                    .filter(transaction -&gt;</span>
+<span class="fc" id="L295">                            transaction.getTransactionDate().toLocalDate().isAfter(startDate))</span>
+<span class="fc" id="L296">                    .filter(transaction -&gt;</span>
+<span class="fc" id="L297">                            transaction.getTransactionDate().toLocalDate().isBefore(endDate))</span>
+<span class="fc" id="L298">                    .filter(transaction -&gt;</span>
+<span class="nc" id="L299">                            transaction.getStatus().equals(TransactionStatusEnum.COMPLETED))</span>
+<span class="fc" id="L300">                    .collect(Collectors.toList());</span>
+<span class="fc" id="L301">            log.info(&quot;Movements: &quot; + transactionList);</span>
+
+<span class="fc" id="L303">            return buildProductMovementsResponse(</span>
+                    transactionList, productId, productType, startDate, endDate);
+
+<span class="nc" id="L306">        } catch (Exception e) {</span>
+<span class="nc" id="L307">            log.error(&quot;Unexpected error when getting movements: &quot;,  e.getMessage());</span>
+<span class="nc" id="L308">            throw new ServiceException(&quot;Unexpected error when getting movements&quot;);</span>
+        }
+    }
+
+    /**
+     * Procesa una transferencia bancaria.
+     * Valida la solicitud, verifica si la cuenta origen contiene saldo
+     * disponible y registra la transacción.
+     *
+     * @param transferRequest DTO que contiene la información necesaria para realizar
+     *               la transferencia, incluyendo cuenta destino y monto
+     * @return Transaction objeto que representa la transacción completada
+     */
+    @Override
+    public Transaction processTransfer(TransferRequestDto transferRequest) {
+<span class="fc" id="L323">        log.info(&quot;Starting transfer from account {} to account {}&quot;,</span>
+<span class="fc" id="L324">                transferRequest.getSourceAccountId(),</span>
+<span class="fc" id="L325">                transferRequest.getTargetAccountId());</span>
+<span class="fc" id="L326">        ApiResponseDto response = null;</span>
+
+        try {
+<span class="fc" id="L329">            Transaction transaction =</span>
+<span class="fc" id="L330">                    transactionMapper.transferRequestToTransaction(transferRequest);</span>
+<span class="fc" id="L331">            response = accountClient.transferToAccount(transferRequest);</span>
+<span class="fc" id="L332">            log.info(&quot;Results of transfer: &quot; + response);</span>
+
+<span class="fc" id="L334">            setTransferResults(</span>
+                    response, transaction,
+                    TransactionTypeEnum.TRANSFER,
+                    ProductTypeEnum.BANK_ACCOUNT);
+
+<span class="fc" id="L339">            transaction = transactionRepository.save(transaction);</span>
+<span class="fc" id="L340">            log.info(&quot; *** End of transfer process *** &quot;);</span>
+
+<span class="fc" id="L342">            return transaction;</span>
+
+<span class="nc" id="L344">        } catch (Exception e) {</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">            String depositStatus = (response != null) ? response.getStatus() : &quot;UNKNOWN&quot;;</span>
+<span class="nc" id="L346">            log.info(&quot;Transfer status: {}.&quot;, depositStatus);</span>
+<span class="nc" id="L347">            log.error(&quot;Unexpected error while saving transaction: &quot;,  e.getMessage());</span>
+<span class="nc" id="L348">            throw new ServiceException(&quot;Unexpected error while saving transaction&quot;);</span>
+        }
+
+    }
+
+    private void setTransferResults(
+            ApiResponseDto response, Transaction transaction,
+            TransactionTypeEnum transactionType, ProductTypeEnum productType) {
+<span class="fc" id="L356">        transaction.setTransactionType(transactionType);</span>
+<span class="fc" id="L357">        transaction.setProductType(productType);</span>
+<span class="fc" id="L358">        transaction.setStatus(TransactionStatusEnum.COMPLETED);</span>
+<span class="fc" id="L359">        transaction.setTransactionDate(LocalDateTime.now());</span>
+<span class="fc" id="L360">        transaction.setCreatedAt(LocalDateTime.now());</span>
+<span class="fc" id="L361">        transaction.setUpdatedAt(LocalDateTime.now());</span>
+
+<span class="fc bfc" id="L363" title="All 2 branches covered.">        if (!response.getStatus().equals(&quot;SUCCESS&quot;)) {</span>
+<span class="fc" id="L364">            transaction.setStatus(TransactionStatusEnum.FAILED);</span>
+<span class="fc" id="L365">            transaction.setErrorMessage(response.getError());</span>
+        }
+<span class="fc" id="L367">    }</span>
+
+    private ProductMovementsResponseDto buildProductMovementsResponse(
+            List&lt;Transaction&gt; transactionList, String productId,
+            String productType, LocalDate startDate, LocalDate endDate) {
+
+<span class="fc" id="L373">        ProductMovementsResponseDto movementsResponse = new ProductMovementsResponseDto();</span>
+<span class="fc" id="L374">        movementsResponse.setProductId(productId);</span>
+<span class="fc" id="L375">        movementsResponse.setProductType(</span>
+<span class="fc" id="L376">                ProductMovementsResponseDto.ProductTypeEnum.valueOf(productType));</span>
+<span class="fc" id="L377">        movementsResponse.setStartDate(startDate);</span>
+<span class="fc" id="L378">        movementsResponse.setEndDate(endDate);</span>
+<span class="fc" id="L379">        movementsResponse.setMovements(transactionList.stream()</span>
+<span class="pc" id="L380">                        .map(transaction -&gt; transactionMapper.transactionToResponseDto(transaction))</span>
+<span class="fc" id="L381">                .collect(Collectors.toList()));</span>
+
+<span class="fc" id="L383">        return movementsResponse;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span></div></body></html>

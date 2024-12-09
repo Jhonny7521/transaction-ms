@@ -105,6 +105,17 @@
 	</dependencyManagement>
 
 	<build>
+		<!--Cobertura con Jacoco-->
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.jacoco</groupId>
+					<artifactId>jacoco-maven-plugin</artifactId>
+					<version>0.8.8</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+		<!--Cobertura con Jacoco-->
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -179,6 +190,40 @@
 				</executions>
 			</plugin>
 			<!-- Plugin para el uso de OpenApi Generator -->
+			<!--Cobertura con Jacoco-->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<!--Exclusiones para reporte de cobertura-->
+				<configuration>
+					<excludes>
+						<exclude>com/bm_nttdata/transaction_ms/TransactionMsApplication.class</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/dto/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/model/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/entity/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/enums/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/exception/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/api/*</exclude>
+						<exclude>com/bm_nttdata/transaction_ms/mapper/*</exclude>
+					</excludes>
+				</configuration>
+				<!--Exclusiones para reporte de cobertura-->
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<!--Cobertura con Jacoco-->
 			<!--CheckStyle-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
