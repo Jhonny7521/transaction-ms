@@ -107,41 +107,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/TransactionResponseDto'
 
-  /transactions:
-    get:
-      tags:
-        - Transaction
-      summary: Get all transactions
-      operationId: getTransactions
-      parameters:
-        - name: accountId
-          in: query
-          schema:
-            type: string
-        - name: creditId
-          in: query
-          schema:
-            type: string
-        - name: startDate
-          in: query
-          schema:
-            type: string
-            format: date
-        - name: endDate
-          in: query
-          schema:
-            type: string
-            format: date
-      responses:
-        '200':
-          description: List of transactions
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TransactionResponseDto'
-
   /transactions/products/{productId}/movements:
     get:
       tags:

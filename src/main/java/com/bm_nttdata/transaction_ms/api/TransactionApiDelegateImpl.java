@@ -10,10 +10,11 @@ import com.bm_nttdata.transaction_ms.model.TransactionResponseDto;
 import com.bm_nttdata.transaction_ms.model.TransferRequestDto;
 import com.bm_nttdata.transaction_ms.model.WithdrawalRequestDto;
 import com.bm_nttdata.transaction_ms.service.TransactionService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import java.time.LocalDate;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     private final TransactionMapper transactionMapper;
 
     @Override
+    @CircuitBreaker(name = "createDeposit", fallbackMethod = "createDepositFallback")
     public ResponseEntity<TransactionResponseDto> createDeposit(DepositRequestDto depositRequest) {
         log.info("Processing deposit request: {}", depositRequest);
         Transaction transaction = transactionService.processDeposit(depositRequest);
@@ -39,6 +41,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     }
 
     @Override
+    @CircuitBreaker(name = "createWithdrawal", fallbackMethod = "createWithdrawalFallback")
     public ResponseEntity<TransactionResponseDto> createWithdrawal(
             WithdrawalRequestDto withdrawalRequest) {
         log.info("Processing withdrawal request: {}", withdrawalRequest);
@@ -47,6 +50,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     }
 
     @Override
+    @CircuitBreaker(name = "createPayment", fallbackMethod = "createPaymentFallback")
     public ResponseEntity<TransactionResponseDto> createPayment(PaymentRequestDto paymentRequest) {
         log.info("Processing payment request: {}", paymentRequest);
         Transaction transaction = transactionService.processPayment(paymentRequest);
@@ -54,6 +58,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     }
 
     @Override
+    @CircuitBreaker(name = "createCreditCharge", fallbackMethod = "createCreditChargeFallback")
     public ResponseEntity<TransactionResponseDto> createCreditCharge(
             CreditChargeRequestDto creditChargeRequest) {
         log.info("Processing charge request: {}", creditChargeRequest);
@@ -62,6 +67,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
     }
 
     @Override
+    @CircuitBreaker(name = "createTransfer", fallbackMethod = "createTransferFallback")
     public ResponseEntity<TransactionResponseDto> createTransfer(
             TransferRequestDto transferRequest) {
         log.info("Processing transfer request: {}", transferRequest);
@@ -78,4 +84,42 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
         return ResponseEntity.ok(productMovements);
     }
 
+    private ResponseEntity<TransactionResponseDto> createDepositFallback(
+            DepositRequestDto depositRequest, Exception e) {
+        log.error("Fallback to process deposit request: {}", depositRequest);
+        log.error("Error: {} ", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
+    }
+    private ResponseEntity<TransactionResponseDto> createWithdrawalFallback(
+            WithdrawalRequestDto withdrawalRequest, Exception e) {
+        log.error("Fallback to process withdrawal request: {}", withdrawalRequest);
+        log.error("Error: {}", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
+    }
+
+    private ResponseEntity<TransactionResponseDto> createPaymentFallback(
+            PaymentRequestDto paymentRequest, Exception e) {
+        log.error("Fallback to process payment request: {}", paymentRequest);
+        log.error("Error: {}", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
+    }
+
+    private ResponseEntity<TransactionResponseDto> createCreditChargeFallback(
+            CreditChargeRequestDto creditChargeRequest, Exception e) {
+        log.error("Fallback to process payment request: {}", creditChargeRequest);
+        log.error("Error: {}", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
+    }
+
+    private ResponseEntity<TransactionResponseDto> createTransferFallback(
+            TransferRequestDto transferRequest, Exception e) {
+        log.error("Fallback to process transfer request: {}", transferRequest);
+        log.error("Error: {}", e.getMessage());
+        return new ResponseEntity(
+                "We are experiencing some errors. Please try again later", HttpStatus.OK);
+    }
 }
