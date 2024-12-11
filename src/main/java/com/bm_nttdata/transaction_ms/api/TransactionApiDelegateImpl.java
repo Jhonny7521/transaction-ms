@@ -91,6 +91,7 @@ public class TransactionApiDelegateImpl implements TransactionApiDelegate {
         return new ResponseEntity(
                 "We are experiencing some errors. Please try again later", HttpStatus.OK);
     }
+
     private ResponseEntity<TransactionResponseDto> createWithdrawalFallback(
             WithdrawalRequestDto withdrawalRequest, Exception e) {
         log.error("Fallback to process withdrawal request: {}", withdrawalRequest);
