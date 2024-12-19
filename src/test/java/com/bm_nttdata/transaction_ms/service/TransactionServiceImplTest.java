@@ -40,7 +40,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
  * Clase de pruebas unitarias para el servicio de transacciones.
  */
 @ExtendWith(MockitoExtension.class)
-public class TransactionServiceImplTest {
+class TransactionServiceImplTest {
 
     @Mock
     private AccountClient accountClient;
